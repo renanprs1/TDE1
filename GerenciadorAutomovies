@@ -1,0 +1,252 @@
+package Cadastro;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Scanner;
+import java.util.stream.Collectors;
+
+public class GerenciadorAutomoveis {
+    private static final String ARQUIVO_DADOS = "automoveis.txt";
+    private static ArrayList<Automovel> automoveis = new ArrayList<>();
+    private static Scanner scanner = new Scanner(System.in);
+
+    public static void main(String[] args) {
+        carregarDados();
+        exibirMenu();
+    }
+
+    private static void exibirMenu() {
+        int opcao;
+        do {
+            System.out.println("\n=== MENU PRINCIPAL ===");
+            System.out.println("1 - Incluir automóvel");
+            System.out.println("2 - Remover automóvel");
+            System.out.println("3 - Alterar dados de automóvel");
+            System.out.println("4 - Consultar automóvel por placa");
+            System.out.println("5 - Listar automóveis (ordenado)");
+            System.out.println("6 - Salvar e sair");
+            System.out.print("Escolha uma opção: ");
+
+            opcao = scanner.nextInt();
+            scanner.nextLine(); // 
+
+            switch (opcao) {
+                case 1:
+                    incluirAutomovel();
+                    break;
+                case 2:
+                    removerAutomovel();
+                    break;
+                case 3:
+                    alterarAutomovel();
+                    break;
+                case 4:
+                    consultarAutomovel();
+                    break;
+                case 5:
+                    listarAutomoveisOrdenados();
+                    break;
+                case 6:
+                    salvarDados();
+                    System.out.println("Dados salvos. Encerrando o programa...");
+                    break;
+                default:
+                    System.out.println("Opção inválida!");
+            }
+        } while (opcao != 6);
+    }
+
+    private static void incluirAutomovel() {
+        System.out.println("\n=== INCLUIR AUTOMÓVEL ===");
+        
+        System.out.print("Placa: ");
+        String placa = scanner.nextLine();
+        
+        if (buscarPorPlaca(placa) != null) {
+            System.out.println("Erro: Já existe um automóvel com esta placa!");
+            return;
+        }
+        
+        System.out.print("Modelo: ");
+        String modelo = scanner.nextLine();
+        
+        System.out.print("Marca: ");
+        String marca = scanner.nextLine();
+        
+        System.out.print("Ano: ");
+        int ano = scanner.nextInt();
+        
+        System.out.print("Valor: ");
+        double valor = scanner.nextDouble();
+        scanner.nextLine(); // Limpar buffer
+        
+        Automovel novo = new Automovel(placa, modelo, marca, ano, valor);
+        automoveis.add(novo);
+        System.out.println("Automóvel cadastrado com sucesso!");
+    }
+
+    private static void removerAutomovel() {
+        System.out.println("\n=== REMOVER AUTOMÓVEL ===");
+        System.out.print("Digite a placa do automóvel a ser removido: ");
+        String placa = scanner.nextLine();
+        
+        Automovel auto = buscarPorPlaca(placa);
+        if (auto == null) {
+            System.out.println("Automóvel não encontrado!");
+            return;
+        }
+        
+        automoveis.remove(auto);
+        System.out.println("Automóvel removido com sucesso!");
+    }
+
+    private static void alterarAutomovel() {
+        System.out.println("\n=== ALTERAR AUTOMÓVEL ===");
+        System.out.print("Digite a placa do automóvel a ser alterado: ");
+        String placa = scanner.nextLine();
+        
+        Automovel auto = buscarPorPlaca(placa);
+        if (auto == null) {
+            System.out.println("Automóvel não encontrado!");
+            return;
+        }
+        
+        System.out.println("Dados atuais:");
+        System.out.println(auto);
+        
+        System.out.println("\nNovos dados (deixe em branco para manter o valor atual):");
+        
+        System.out.print("Modelo (" + auto.getModelo() + "): ");
+        String modelo = scanner.nextLine();
+        if (!modelo.isEmpty()) auto.setModelo(modelo);
+        
+        System.out.print("Marca (" + auto.getMarca() + "): ");
+        String marca = scanner.nextLine();
+        if (!marca.isEmpty()) auto.setMarca(marca);
+        
+        System.out.print("Ano (" + auto.getAno() + "): ");
+        String anoStr = scanner.nextLine();
+        if (!anoStr.isEmpty()) auto.setAno(Integer.parseInt(anoStr));
+        
+        System.out.print("Valor (" + auto.getValor() + "): ");
+        String valorStr = scanner.nextLine();
+        if (!valorStr.isEmpty()) auto.setValor(Double.parseDouble(valorStr));
+        
+        System.out.println("Automóvel alterado com sucesso!");
+    }
+
+    private static void consultarAutomovel() {
+        System.out.println("\n=== CONSULTAR AUTOMÓVEL ===");
+        System.out.print("Digite a placa do automóvel: ");
+        String placa = scanner.nextLine();
+        
+        Automovel auto = buscarPorPlaca(placa);
+        if (auto == null) {
+            System.out.println("Automóvel não encontrado!");
+            return;
+        }
+        
+        System.out.println("\nDados do automóvel:");
+        System.out.println(auto);
+    }
+
+    private static void listarAutomoveisOrdenados() {
+        System.out.println("\n=== LISTAR AUTOMÓVEIS ORDENADOS ===");
+        System.out.println("1 - Por placa");
+        System.out.println("2 - Por modelo");
+        System.out.println("3 - Por marca");
+        System.out.print("Escolha o critério de ordenação: ");
+        
+        int criterio = scanner.nextInt();
+        scanner.nextLine(); 
+        
+        List<Automovel> listaOrdenada;
+        
+        switch (criterio) {
+            case 1:
+                listaOrdenada = automoveis.stream()
+                        .sorted(Comparator.comparing(Automovel::getPlaca))
+                        .collect(Collectors.toList());
+                break;
+            case 2:
+                listaOrdenada = automoveis.stream()
+                        .sorted(Comparator.comparing(Automovel::getModelo))
+                        .collect(Collectors.toList());
+                break;
+            case 3:
+                listaOrdenada = automoveis.stream()
+                        .sorted(Comparator.comparing(Automovel::getMarca))
+                        .collect(Collectors.toList());
+                break;
+            default:
+                System.out.println("Opção inválida! Listando por placa (padrão).");
+                listaOrdenada = automoveis.stream()
+                        .sorted(Comparator.comparing(Automovel::getPlaca))
+                        .collect(Collectors.toList());
+        }
+        
+        System.out.println("\n=== LISTA DE AUTOMÓVEIS ===");
+        if (listaOrdenada.isEmpty()) {
+            System.out.println("Nenhum automóvel cadastrado.");
+        } else {
+            listaOrdenada.forEach(System.out::println);
+        }
+    }
+
+    private static Automovel buscarPorPlaca(String placa) {
+        for (Automovel auto : automoveis) {
+            if (auto.getPlaca().equalsIgnoreCase(placa)) {
+                return auto;
+            }
+        }
+        return null;
+    }
+
+    private static void carregarDados() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(ARQUIVO_DADOS))) {
+            String linha;
+            while ((linha = reader.readLine()) != null) {
+                String[] dados = linha.split(",");
+                if (dados.length == 5) {
+                    String placa = dados[0].trim();
+                    String modelo = dados[1].trim();
+                    String marca = dados[2].trim();
+                    int ano = Integer.parseInt(dados[3].trim());
+                    double valor = Double.parseDouble(dados[4].trim());
+                    
+                    automoveis.add(new Automovel(placa, modelo, marca, ano, valor));
+                }
+            }
+            System.out.println("Dados carregados com sucesso!");
+        } catch (FileNotFoundException e) {
+            System.out.println("Arquivo de dados não encontrado. Será criado um novo ao salvar.");
+        } catch (IOException e) {
+            System.out.println("Erro ao ler o arquivo: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.out.println("Erro ao converter dados numéricos: " + e.getMessage());
+        }
+    }
+
+    private static void salvarDados() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ARQUIVO_DADOS))) {
+            for (Automovel auto : automoveis) {
+                writer.write(String.format("%s,%s,%s,%d,%.2f%n",
+                        auto.getPlaca(),
+                        auto.getModelo(),
+                        auto.getMarca(),
+                        auto.getAno(),
+                        auto.getValor()));
+            }
+            System.out.println("Dados salvos com sucesso!");
+        } catch (IOException e) {
+            System.out.println("Erro ao salvar no arquivo: " + e.getMessage());
+        }
+    }
+}
